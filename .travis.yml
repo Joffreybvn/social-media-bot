@@ -1,0 +1,21 @@
+language: python
+python:
+  - 3.9
+services:
+  - docker
+
+install:
+  - pip install -r requirements.txt
+
+before_script:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+script:
+  - docker build -t joffreybvn/social-media-bot:latest .
+
+deploy:
+  provider: script
+  script:
+    docker push joffreybvn/social-media-bot:latest;
+  on:
+    branch: master
