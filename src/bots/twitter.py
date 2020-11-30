@@ -8,11 +8,6 @@ class TweeterBot:
 
     def __init__(self, retweet_frequency: int = 15, max_tweets: int = 1000):
 
-        print(config.twitter.api_key)
-        print(config.twitter.api_secret)
-        print(config.twitter.access_token)
-        print(config.twitter.access_secret)
-
         # Authenticate to Twitter
         auth = tweepy.OAuthHandler(config.twitter.api_key, config.twitter.api_secret)
         auth.set_access_token(config.twitter.access_token, config.twitter.access_secret)
