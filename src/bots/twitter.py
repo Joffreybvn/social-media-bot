@@ -16,6 +16,7 @@ class TweeterBot:
         self.api = tweepy.API(auth)
 
         # Init the bot parameters
+        print(config.twitter.topics)
         self.topics = config.twitter.topics
         self.retweet_frequency = retweet_frequency
         self.max_tweets = max_tweets
@@ -50,6 +51,7 @@ class TweeterBot:
             raw_tweets = []
 
             for term in self.topics:
+                print(term)
                 raw_tweets += self.api.search(term, lang='en', result_type='recent', count=self.max_tweets)
 
         # Stop execution if an error occurred
