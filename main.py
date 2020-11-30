@@ -11,7 +11,7 @@ if __name__ == '__main__':
     print("[+] Dummy api started")
 
     # Instantiate the bot
-    TweeterBot(20).schedule()
+    TweeterBot(20).schedule(True)
     print("[+] Tweeter bot started")
 
     # Execute the scheduled functions
