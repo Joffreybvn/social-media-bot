@@ -50,7 +50,7 @@ class TweeterBot:
             raw_tweets = []
 
             for term in self.topics:
-                raw_tweets += self.api.search(term, lang='en', result_type='recent', count=self.max_tweets)
+                raw_tweets += self.api.search(term, lang='en', result_type='popular', count=self.max_tweets)
 
         # Stop execution if an error occurred
         except Exception as error:
