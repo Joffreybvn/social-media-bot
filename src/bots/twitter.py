@@ -74,8 +74,7 @@ class TweeterBot:
                     found_tweets.append(tweet)
 
             # Retweet the most liked/retweeted tweet
-            tweet = max(found_tweets, key=self.__math_tweet_popularity)
-            self.__retweet(tweet)
+            self.__retweet(found_tweets)
 
     @staticmethod
     def __sanitize(tweets: list):
@@ -88,16 +87,17 @@ class TweeterBot:
         for tweet in tweets:
             yield tweet._json
 
-    def __retweet(self, tweet: dict):
+    def __retweet(self, tweets: list):
         """
         Retweet a given tweet.
 
-        :param tweet: The tweet to post on twitter.
+        :param tweets: The tweets to use to find the best tweet.
         :type: dict
         """
 
         # Retweet the tweet
         try:
+            tweet = max(tweets, key=self.__math_tweet_popularity)
             self.api.retweet(tweet['id'])
 
         # Print the error if it occur
