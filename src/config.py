@@ -24,7 +24,7 @@ class TweeterConfig:
     ]
 
     # Other parameters
-    interval = environ.get('INTERVAL', 20)
+    interval = int(environ.get('INTERVAL', 20))
 
 
 @dataclass
