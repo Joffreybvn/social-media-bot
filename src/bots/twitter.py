@@ -1,12 +1,15 @@
 import tweepy
-import schedule
 from datetime import datetime, timedelta, timezone
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from src.config import config
+
+scheduler = BlockingScheduler()
 
 
 class TweeterBot:
 
-    def __init__(self, retweet_frequency: int = 15, max_tweets: int = 1000):
+    def __init__(self, max_tweets: int = 1000):
 
         # Authenticate to Twitter
         auth = tweepy.OAuthHandler(config.twitter.api_key, config.twitter.api_secret)
@@ -17,64 +20,54 @@ class TweeterBot:
 
         # Init the bot parameters
         self.topics = config.twitter.topics
-        self.retweet_frequency = retweet_frequency
+        self.interval = config.twitter.interval
         self.max_tweets = max_tweets
 
         # Set the interval of time to get tweets from
-        self.last_tweet_time = datetime.now(timezone.utc) - timedelta(minutes=self.retweet_frequency)
+        self.last_tweet_time = datetime.now(timezone.utc) - timedelta(minutes=self.interval)
 
-    def schedule(self, run_now: bool = False):
-        """
-        Start a scheduler which will run the bot every 10 minutes.
+        self.initialize()
 
-        :param run_now: If the bot has to run when the scheduler initialize.
-        :type run_now: bool
-        """
+    def initialize(self):
 
-        # If run_now is true, run the bot
-        if run_now:
-            self.run()
+        @scheduler.scheduled_job(IntervalTrigger(minutes=config.twitter.interval))
+        def run():
+            """
+            Retrieve the tweets corresponding to the given topics, sanitize
+            and filter them to get the most popular/interesting one, and
+            retweet it on tweeter.
+            """
 
-        # Schedule a run every 20 minutes (by default)
-        schedule.every(self.retweet_frequency).minutes.do(self.run)
+            # Retrieve all tweets corresponding to the topics
+            try:
+                raw_tweets = []
 
-    def run(self):
-        """
-        Retrieve the tweets corresponding to the given topics, sanitize
-        and filter them to get the most popular/interesting one, and
-        retweet it on tweeter.
-        """
+                for term in self.topics:
+                    raw_tweets += self.api.search(term, lang='en', result_type='recent', count=self.max_tweets)
 
-        # Retrieve all tweets corresponding to the topics
-        try:
-            raw_tweets = []
+            # Stop execution if an error occurred
+            except Exception as error:
+                print("Retrieving error: ", error)
 
-            for term in self.topics:
-                raw_tweets += self.api.search(term, lang='en', result_type='recent', count=self.max_tweets)
+            else:
+                # Loop through all tweets and sanitize them
+                found_tweets = []
+                for tweet in self.__sanitize(raw_tweets):
 
-        # Stop execution if an error occurred
-        except Exception as error:
-            print("Retrieving error: ", error)
+                    # Remove the retweets
+                    if ('retweeted_status' not in tweet
 
-        else:
-            # Loop through all tweets and sanitize them
-            found_tweets = []
-            for tweet in self.__sanitize(raw_tweets):
+                            # Remove the tweets without link/image/video
+                            and 'http' in tweet['text']
 
-                # Remove the retweets
-                if ('retweeted_status' not in tweet
+                            # Keep only the recent tweets
+                            and self.__string_to_date(tweet['created_at']) > self.last_tweet_time):
 
-                        # Remove the tweets without link/image/video
-                        and 'http' in tweet['text']
+                        # Save the filtered tweets
+                        found_tweets.append(tweet)
 
-                        # Keep only the recent tweets
-                        and self.__string_to_date(tweet['created_at']) > self.last_tweet_time):
-
-                    # Save the filtered tweets
-                    found_tweets.append(tweet)
-
-            # Retweet the most liked/retweeted tweet
-            self.__retweet(found_tweets)
+                # Retweet the most liked/retweeted tweet
+                self.__retweet(found_tweets)
 
     @staticmethod
     def __sanitize(tweets: list):
@@ -135,3 +128,9 @@ class TweeterBot:
         :rtype: int
         """
         return int(tweet['favorite_count']) + int(tweet['retweet_count'])
+
+    @staticmethod
+    def start():
+        """Start all schedulers."""
+
+        scheduler.start()

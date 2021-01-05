@@ -14,6 +14,7 @@ class TweeterConfig:
     access_token = environ.get('TWITTER_ACCESS_TOKEN')
     access_secret = environ.get('TWITTER_ACCESS_SECRET')
 
+    # Topics
     topics = [
         'Python Programming',
         'Machine Learning',
@@ -21,6 +22,9 @@ class TweeterConfig:
         'Data Science',
         'Hackathon'
     ]
+
+    # Other parameters
+    interval = environ.get('INTERVAL', 20)
 
 
 @dataclass
